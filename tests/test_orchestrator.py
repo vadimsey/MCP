@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from orchestrator import orchestrate_goal
+from orchestrator import get_openai_enabled_roles, orchestrate_goal, should_use_openai
 
 
 class OrchestratorTests(unittest.TestCase):
@@ -50,6 +50,29 @@ class OrchestratorTests(unittest.TestCase):
         self.assertIsInstance(result["next_actions"], list)
         self.assertIsInstance(result["owner_roles"], dict)
         self.assertIsInstance(result["agent_outputs"], dict)
+
+    def test_openai_defaults_to_planner_only(self):
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}, clear=True):
+            self.assertEqual(get_openai_enabled_roles(), {"planner"})
+            self.assertTrue(should_use_openai("planner"))
+            self.assertFalse(should_use_openai("researcher"))
+            self.assertFalse(should_use_openai("builder"))
+            self.assertFalse(should_use_openai("reviewer"))
+
+    def test_openai_enabled_roles_can_be_configured(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test-key",
+                "OPENAI_ENABLED_ROLES": "planner,reviewer",
+            },
+            clear=True,
+        ):
+            self.assertEqual(get_openai_enabled_roles(), {"planner", "reviewer"})
+            self.assertTrue(should_use_openai("planner"))
+            self.assertFalse(should_use_openai("researcher"))
+            self.assertFalse(should_use_openai("builder"))
+            self.assertTrue(should_use_openai("reviewer"))
 
 
 if __name__ == "__main__":

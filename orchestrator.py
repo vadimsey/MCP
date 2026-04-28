@@ -146,8 +146,22 @@ def run_role_agent(role_name: str, goal: str) -> dict[str, Any]:
     raise ValueError(f"Unknown agent role: {role_name}")
 
 
-def should_use_openai() -> bool:
-    return bool(os.environ.get("OPENAI_API_KEY"))
+def get_openai_enabled_roles() -> set[str]:
+    raw_roles = os.environ.get("OPENAI_ENABLED_ROLES", "planner")
+    enabled_roles = {
+        role.strip().lower() for role in raw_roles.split(",") if role.strip()
+    }
+
+    if "all" in enabled_roles:
+        return set(AGENT_ROLES.keys())
+
+    return enabled_roles
+
+
+def should_use_openai(role_name: str) -> bool:
+    return bool(os.environ.get("OPENAI_API_KEY")) and (
+        role_name in get_openai_enabled_roles()
+    )
 
 
 def get_openai_model() -> str:
@@ -159,7 +173,7 @@ def call_openai_role_agent(
     goal: str,
     output_hint: str,
 ) -> dict[str, Any] | None:
-    if not should_use_openai():
+    if not should_use_openai(role_name):
         return None
 
     try:
