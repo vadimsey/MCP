@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from fastmcp import FastMCP
+from orchestrator import orchestrate_goal
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
@@ -34,13 +35,7 @@ async def health(request: Request) -> Response:
 
 
 def call_real_orchestrator(goal: str) -> dict[str, Any]:
-    """Replace this stub with a call to your real main orchestrator agent."""
-    return {
-        "status": "ok",
-        "message": "Stub orchestrator accepted the goal.",
-        "goal": goal,
-        "next_step": "Replace call_real_orchestrator() in server.py with your real agent call.",
-    }
+    return orchestrate_goal(goal)
 
 
 @mcp.tool()
