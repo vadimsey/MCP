@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from fastmcp import Client
 
@@ -6,6 +7,13 @@ from server import handle_run_orchestrator, mcp
 
 
 class ServerTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.env_patcher = patch.dict("os.environ", {"OPENAI_API_KEY": ""})
+        self.env_patcher.start()
+
+    def tearDown(self):
+        self.env_patcher.stop()
+
     async def test_mcp_tool_is_registered(self):
         async with Client(mcp) as client:
             tools = await client.list_tools()

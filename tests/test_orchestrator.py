@@ -1,9 +1,17 @@
 import unittest
+from unittest.mock import patch
 
 from orchestrator import orchestrate_goal
 
 
 class OrchestratorTests(unittest.TestCase):
+    def setUp(self):
+        self.env_patcher = patch.dict("os.environ", {"OPENAI_API_KEY": ""})
+        self.env_patcher.start()
+
+    def tearDown(self):
+        self.env_patcher.stop()
+
     def test_mvp_launch_goal_returns_meaningful_plan(self):
         result = orchestrate_goal("Составь план запуска MVP")
 
