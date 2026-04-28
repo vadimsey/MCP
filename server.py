@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any
 
@@ -6,6 +7,8 @@ from orchestrator import orchestrate_goal
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+
+logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     name="ChatGPT Orchestrator MCP",
@@ -38,14 +41,7 @@ def call_real_orchestrator(goal: str) -> dict[str, Any]:
     return orchestrate_goal(goal)
 
 
-@mcp.tool()
-def run_orchestrator(goal: str) -> dict[str, Any]:
-    """
-    Send a goal to the main orchestrator agent and return the result.
-
-    Args:
-        goal: The task or objective that the main orchestrator should handle.
-    """
+def handle_run_orchestrator(goal: str) -> dict[str, Any]:
     clean_goal = goal.strip()
 
     if not clean_goal:
@@ -54,7 +50,27 @@ def run_orchestrator(goal: str) -> dict[str, Any]:
             "message": "The 'goal' argument is required and cannot be empty.",
         }
 
-    return call_real_orchestrator(clean_goal)
+    try:
+        return call_real_orchestrator(clean_goal)
+    except Exception as exc:
+        logger.exception("Orchestrator failed")
+        return {
+            "status": "error",
+            "message": "Orchestrator failed while processing the goal.",
+            "goal": clean_goal,
+            "error_type": type(exc).__name__,
+        }
+
+
+@mcp.tool()
+def run_orchestrator(goal: str) -> dict[str, Any]:
+    """
+    Send a goal to the main orchestrator agent and return the result.
+
+    Args:
+        goal: The task or objective that the main orchestrator should handle.
+    """
+    return handle_run_orchestrator(goal)
 
 
 if __name__ == "__main__":
